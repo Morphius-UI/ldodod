@@ -1,6 +1,5 @@
 import time
 import telebot
-from PIL.ImageFile import ERRORS
 from telebot import types
 import pars_info
 
@@ -93,6 +92,19 @@ def admin_base_login(message):
             bot.send_message(message.chat.id, 'Добро пожаловать, admin!')
             adm_propusk = 1
             print('Вход выполнен, admin, ' + str(message.chat.id))
+            admin_panel(message)
+
+def admin_panel(message):
+    if adm_propusk == 1:
+        markup = types.InlineKeyboardMarkup()
+        magaz = types.InlineKeyboardButton("Список учеников", callback_data="spisok")
+        minigame = types.InlineKeyboardButton("Редактировать поинты", callback_data="redact")
+        markup.add(magaz, minigame)
+        bot.send_message(message.chat.id, '<b>Панель админа</b>', parse_mode='HTML', reply_markup=markup)
+        
+
+
+
 
 def child(message):
     if message.text == 'Назад':
@@ -114,7 +126,7 @@ def child(message):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         item1 = types.KeyboardButton("Назад")
         markup.add(item1)
-        bot.send_message(message.chat.id, 'Введите свои данные в формате:\n Логин(ваше ФИО, указанное в сетевом городе)/Класс(Ваш класс)/Пароль(Главное запомните)', reply_markup=markup)
+        bot.send_message(message.chat.id, 'Введите свои данные в формате:\nЛогин(ваше ФИО, указанное в сетевом городе):Класс(Ваш класс):Пароль(Главное запомните)\n\nУчитывайте двоеточия', reply_markup=markup)
         bot.register_next_step_handler(message, register_child)
 
 
@@ -123,7 +135,8 @@ def auth(message):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         item1 = types.KeyboardButton("Войти")
         item2 = types.KeyboardButton("Регистрация")
-        markup.add(item1, item2)
+        item3 = types.KeyboardButton("Назад")
+        markup.add(item1, item2, item3)
         bot.send_message(message.chat.id, 'Вход/регистрация', reply_markup=markup)
         bot.register_next_step_handler(message, child)
 
@@ -142,7 +155,7 @@ def auth(message):
                 if tochka == '...':
                     tochka = ''
             if reg_cheak != None:
-                if login_cheak == login and password_cheak == password:
+                if login_cheak == login and password_cheak == str(password):
                     time.sleep(3)
                     bot.delete_message(message.chat.id, rep.message_id)
                     menu(message)
@@ -177,7 +190,7 @@ def register_child(message):
         bot.register_next_step_handler(message, child)
     else:
         try:
-            login, klass, password = message.text.split('/')
+            login, klass, password = message.text.split(':')
             log_cheak = pars_info.pars_users(login=login)
             log_tr = pars_info.truth(login)
             klass = pars_info.pars_users(klass=login)
@@ -200,6 +213,34 @@ def register_child(message):
         except:
             bot.send_message(message.chat.id, 'Неправильный формат, попробуйте еще раз')
             bot.register_next_step_handler(message, register_child)  # , startapp
+
+@bot.callback_query_handler(func=lambda call: True)
+def admin_call(call):
+    if call.data == 'spisok':
+        print(124124)
+        pagenow = 1
+        markup = types.InlineKeyboardMarkup()
+        nextpage = types.InlineKeyboardButton(text="➡️", callback_data='nextpage')
+        markup.add(nextpage)
+        def page():
+            if pagenow == 1:
+                usr, point = pars_info.admin_spisok()
+                itog = ''
+                if pagenow == 1:
+                    for i in range(10):
+                        itog += f'@{bot.get_chat_member(call.message.chat.id, usr[i]).user.username} - {point[i]}\n'
+                bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
+            else:
+                backpage = types.InlineKeyboardButton(text="⬅️", callback_data='backpage')
+                markup.add(backpage)
+                usr, point = pars_info.admin_spisok()
+                itog = ''
+                for i in range((pagenow * 10 - 10), pagenow * 10):
+                    itog += f'{Usr[i]} -- {Points[i]}'
+                bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
+
+        page()
+
 
 
 
