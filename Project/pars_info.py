@@ -95,3 +95,16 @@ def register(message, login, klass, password):
     Person.create(CREATE_DATA=calendar.timegm(time.gmtime()), user_id=message.chat.id, Points=point, Class=klass,
                   Register='True', Login=login)
     USERS_BASE.create(USER_FIO=login, USER_PASSWORD=password)
+
+
+def admin_spisok():
+    Usr = []
+    Points = []
+    for user in PROFILE.select():
+        userId = user.user_id
+        point = user.Points
+        Usr.append(userId)
+        Points.append(point)
+
+
+    return Usr, Points
