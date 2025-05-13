@@ -1,7 +1,7 @@
 from peewee import *
 import calendar
 import time
-db = SqliteDatabase('base_ldod.db')
+db = SqliteDatabase('ldodod/Project/base_ldod.db')
 
 
 class Person(Model): #Хранит все данные которые есть в боте
