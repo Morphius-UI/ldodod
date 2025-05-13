@@ -104,7 +104,6 @@ def admin_panel(message, k=None):
             bot.edit_message_text('<b>Панель админа</b>', parse_mode='HTML', chat_id=message.chat.id, message_id=message.id, reply_markup=markup)
         else:
             bot.send_message(message.chat.id, '<b>Панель админа</b>', parse_mode='HTML', reply_markup=markup)
-        bot.register_next_step_handler(message, admin_call)
 
 
 
@@ -119,23 +118,21 @@ def child(message):
         markup.add(item1, item2)
         bot.send_message(message.chat.id, 'Кто вы?', reply_markup=markup)
         bot.register_next_step_handler(message, cheak0)
-
     if message.text == 'Войти':
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         item1 = types.KeyboardButton("Назад")
         markup.add(item1)
-        bot.send_message(message.chat.id, 'Введите логин и пароль в формате:\n'
-                                          'Логин(ваше ФИО, указанное в сетевом городе):Пароль', reply_markup=markup)
-        bot.register_next_step_handler(message, auth)
+        bot.send_message(message.chat.id, '<b>Введите логин:</b>\n', reply_markup=markup, parse_mode="HTML")
+        bot.register_next_step_handler(message, auth_login)
     if message.text== "Регистрация":
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         item1 = types.KeyboardButton("Назад")
         markup.add(item1)
-        bot.send_message(message.chat.id, 'Введите свои данные в формате:\nЛогин(ваше ФИО, указанное в сетевом городе):Класс(Ваш класс):Пароль(Главное запомните)\n\nУчитывайте двоеточия', reply_markup=markup)
-        bot.register_next_step_handler(message, register_child)
+        bot.send_message(message.chat.id, 'Введите ваш логин, <b>как в электронном дневнике</b>', reply_markup=markup, parse_mode="HTML")
+        bot.register_next_step_handler(message, register_child_login)
 
 
-def auth(message):
+def auth_login(message):
     if message.text == 'Назад':
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         item1 = types.KeyboardButton("Войти")
@@ -144,13 +141,36 @@ def auth(message):
         markup.add(item1, item2, item3)
         bot.send_message(message.chat.id, 'Вход/регистрация', reply_markup=markup)
         bot.register_next_step_handler(message, child)
-
     else:
         try:
-            login, password = message.text.split(':')
+            login = message.text
             login_cheak = pars_info.pars_users(login=login)
-            password_cheak = pars_info.pars_users(password=password)
             reg_cheak = pars_info.pars_users(register=login)
+            if reg_cheak != None:
+                if login_cheak == login:
+                    time.sleep(3)
+                    bot.send_message(message.chat.id, 'Введите <b>пароль</b>', parse_mode="HTML")
+                    bot.register_next_step_handler(message, auth_password)
+                else:
+                    bot.send_message(message.chat.id, 'Неверный <b>логин</b>, пожалуйста попробуйте еще раз!', parse_mode='HTML')
+                    bot.register_next_step_handler(message, auth_login)
+            else:
+                markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                item2 = types.KeyboardButton("Регистрация")
+                markup.add(item2)
+                bot.send_message(message.chat.id, 'Вы не зарегистрированы, для начала пройдите регистрацию!', reply_markup=markup)
+                bot.register_next_step_handler(message, child)
+
+
+        except:
+            bot.send_message(message.chat.id, 'Неправильный формат, попробуйте еще раз')
+            bot.register_next_step_handler(message, auth_login)  # , startapp
+
+def auth_password(message):
+    try:
+        password = message.text
+        pas_cheak = pars_info.pars_users(password=password)
+        if pas_cheak == str(password):
             rep = bot.send_message(message.chat.id, '<b>Идентификация</b>', parse_mode='HTML')
             tochka = ''
             for i in range(6):
@@ -159,32 +179,17 @@ def auth(message):
                 bot.edit_message_text(chat_id=message.chat.id, message_id=rep.message_id, text=f'<b>{rep.text}{tochka}</b>', parse_mode='HTML')
                 if tochka == '...':
                     tochka = ''
-            if reg_cheak != None:
-                if login_cheak == login and password_cheak == str(password):
-                    time.sleep(3)
-                    bot.delete_message(message.chat.id, rep.message_id)
-                    menu(message)
-                else:
-                    bot.delete_message(message.chat.id, rep.message_id)
-                    bot.send_message(message.chat.id, 'Введены <b>неправильные данные</b>, пожалуйста попробуйте еще раз!', parse_mode='HTML')
-                    bot.register_next_step_handler(message, auth)
-            else:
-                markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-                item2 = types.KeyboardButton("Регистрация")
-                markup.add(item2)
-                bot.delete_message(message.chat.id, rep.message_id)
-                bot.send_message(message.chat.id, 'Вы не зарегистрированы, для начала пройдите регистрацию!', reply_markup=markup)
-                bot.register_next_step_handler(message, child)
+            bot.delete_message(message.chat.id, rep.id)
+            menu(message)
+        else:
+            bot.send_message(message.chat.id, '<b>Неверный пароль, повторите!</b>', parse_mode='HTML')
+            bot.register_next_step_handler(message, auth_password)
+    except:
+        pass
+        
 
 
-        except:
-            bot.send_message(message.chat.id, 'Неправильный формат, попробуйте еще раз')
-            bot.register_next_step_handler(message, auth)  # , startapp
-
-
-
-
-def register_child(message):
+def register_child_login(message):
     if message.text == 'Назад':
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         item1 = types.KeyboardButton("Войти")
@@ -195,14 +200,14 @@ def register_child(message):
         bot.register_next_step_handler(message, child)
     else:
         try:
-            login, klass, password = message.text.split(':')
+            global login
+            login = message.text
             log_cheak = pars_info.pars_users(login=login)
             log_tr = pars_info.truth(login)
-            klass = pars_info.pars_users(klass=login)
             if log_cheak == None and log_tr != None:
-                pars_info.register(message, login, klass, password)
-                time.sleep(2)
-                menu(login)
+                bot.send_message(message.chat.id, '<b>Введите пароль для своей учетной записи</b>', parse_mode="HTML")
+                print(login)
+                bot.register_next_step_handler(message, register_child_password)
             elif log_cheak != None:
                 markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
                 item2 = types.KeyboardButton("Войти")
@@ -211,16 +216,23 @@ def register_child(message):
                 bot.register_next_step_handler(message, child)
             elif log_tr == None:
                 bot.send_message(message.chat.id, 'Такого пользователя нет в базе данных!')
-                bot.register_next_step_handler(message, register_child)
-
-
+                bot.register_next_step_handler(message, register_child_login)
 
         except:
             bot.send_message(message.chat.id, 'Неправильный формат, попробуйте еще раз')
-            bot.register_next_step_handler(message, register_child)  # , startapp
+            bot.register_next_step_handler(message, register_child_login)  # , startapp
 
-
-
+def register_child_password(message):
+    try:
+        pas = message.text
+        pars_info.register(message, login, password=pas)
+        markup = types.InlineKeyboardMarkup()
+        access = types.InlineKeyboardButton(text="✅", callback_data='access')
+        not_access = types.InlineKeyboardButton(text="❌", callback_data='no_access')
+        markup.add(access, not_access)
+        bot.send_message(message.chat.id, '<b>Вы уверены?</b>', parse_mode='HTML', reply_markup=markup)
+    except:
+        pass
 
 
 def menu(message=None):
@@ -244,7 +256,9 @@ def answermenu(call):
     global message_id
     global pagenow1
     global _all_spis
+    global price
     message_id = call.message.message_id
+    price = 0
     chat_id = call.message.chat.id
     if call.data == 'magaz':
         pagenow = 1
@@ -261,6 +275,7 @@ def answermenu(call):
         menu(call.message)
 
     if call.data == "t1":
+        bot.delete_message(chat_id, call.message.id)
         pagenow = 1
         def magaz(photo=None, caption=None):
             markup = types.InlineKeyboardMarkup()
@@ -271,6 +286,7 @@ def answermenu(call):
                 markup.add(buy, nextpage, back)
                 photo = open('ldodod/Project/kryzka.jpg', 'rb')
                 caption = '<b>Фирменная кружка Ldod Score</b>\n\nЦена: <b>30000 поинтов.</b>'
+                price = 30000
             elif pagenow == 3:
                 backpage = types.InlineKeyboardButton(text="⬅️", callback_data='backpage')
                 markup.add(buy, backpage, back)
@@ -282,14 +298,16 @@ def answermenu(call):
     if call.data == "nextpage":
         pagenow+=1
         if pagenow == 2:
-            photo = open('t-shirt.jpg', 'rb')
+            photo = open('ldodod/Project/t-shirt.jpg', 'rb')
             caption = '<b>Фирменная футболка Ldod Score</b>\n\nЦена: <b>100000 поинтов.</b>'
             bot.delete_message(call.message.chat.id, call.message.id)
+            price = 100000
             magaz(photo, caption)
         elif pagenow == 3:
-            photo = open('znachok.jpg', 'rb')
+            photo = open('ldodod/Project/znachok.jpg', 'rb')
             caption = '<b>Значок Ldod Score</b>\n\nЦена: <b>10000 поинтов.</b>'
             bot.delete_message(call.message.chat.id, call.message.id)
+            price = 10000
             magaz(photo, caption)
     if call.data == "backpage":
         pagenow -= 1
@@ -297,14 +315,16 @@ def answermenu(call):
             bot.delete_message(call.message.chat.id, call.message.id)
             magaz()
         elif pagenow == 2:
-            photo = open('t-shirt.jpg', 'rb')
+            photo = open('ldodod/Project/t-shirt.jpg', 'rb')
             caption = '<b>Фирменная футболка Ldod Score</b>\n\nЦена: <b>100000 поинтов.</b>'
             bot.delete_message(call.message.chat.id, call.message.id)
+            price = 100000
             magaz(photo, caption)
         elif pagenow == 3:
             photo = open('znachok.jpg', 'rb')
             caption = '<b>Значок Ldod Score</b>\n\nЦена: <b>10000 поинтов.</b>'
             bot.delete_message(call.message.chat.id, call.message.id)
+            price = 10000
             magaz(photo, caption)
 
 
@@ -345,27 +365,44 @@ def answermenu(call):
 
     def page():
         usr, point = pars_info.admin_spisok()
-        itog = ''
+        itog = f'<b>Страница {pagenow1}</b>\n'
         markup = types.InlineKeyboardMarkup()
-        nextpage = types.InlineKeyboardButton(text="➡️", callback_data='nextpage1')
         back = types.InlineKeyboardButton(text="Назад", callback_data='back1')
-        if pagenow1 == 1:
-            markup.row(back, nextpage)
-            for i in range(10):
-                itog += f'@{bot.get_chat_member(call.message.chat.id, usr[i]).user.username} - {point[i]}\n'
-            bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
+        if len(usr) > pagenow1*10:
+            nextpage = types.InlineKeyboardButton(text="➡️", callback_data='nextpage1')
+            if pagenow1 == 1:
+                markup.row(back, nextpage)
+                for i in range(10):
+                    itog += f'@{bot.get_chat_member(call.message.chat.id, usr[i]).user.username} - {point[i]}\n'
+                bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="HTML")
+            else:
+                backpage = types.InlineKeyboardButton(text="⬅️", callback_data='backpage1')
+                markup.row(backpage, nextpage, back)
+                for i in range((pagenow1 * 10 - 10), (pagenow1 * 10)-1):
+                    try:
+                        if usr[i] != None:
+                            itog += f'@{bot.get_chat_member(call.message.chat.id, usr[i]).user.username} - {point[i]}\n'
+                    except:
+                        _all_spis = True
+                        pass
+                bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="HTML")
         else:
-            backpage = types.InlineKeyboardButton(text="⬅️", callback_data='backpage1')
-            markup.row(backpage, nextpage, back)
-            for i in range((pagenow1 * 10 - 10), (pagenow1 * 10)-1):
-                try:
-                    if usr[i] != None:
-                        itog += f'@{bot.get_chat_member(call.message.chat.id, usr[i]).user.username} - {point[i]}\n'
-                except:
-                    _all_spis = True
-                    pass
-            bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
-            
+            if pagenow1 <= 1:
+                markup.row(back, nextpage)
+                for i in range(10):
+                    itog += f'@{bot.get_chat_member(call.message.chat.id, usr[i]).user.username} - {point[i]}\n'
+                bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="HTML")
+            else:
+                backpage = types.InlineKeyboardButton(text="⬅️", callback_data='backpage1')
+                markup.row(backpage, back)
+                for i in range((pagenow1 * 10 - 10), (pagenow1 * 10)-1):
+                    try:
+                        if usr[i] != None:
+                            itog += f'@{bot.get_chat_member(call.message.chat.id, usr[i]).user.username} - {point[i]}\n'
+                    except:
+                        _all_spis = True
+                        pass
+                bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="HTML")
     if call.data == 'spisok':
         print(124124)
         pagenow1 = 1
@@ -379,9 +416,18 @@ def answermenu(call):
         print(pagenow1)
         page()
     if call.data == 'backpage1':
-        pagenow1 = pagenow - 1
+        pagenow1 = pagenow1 - 1
         print(pagenow1)
         page()
+
+    if call.data == 'cheaktruth':
+        bot.answer_callback_query(callback_query_id=call.id, text='Все в норме!')
+    if call.data == 'access':
+        menu(call.message)
+    if call.data == 'no_access':
+        pars_info.deregister(call.message)
+        bot.edit_message_text('<b>Введите пароль еще раз</b>', chat_id, call.message.id, parse_mode='HTML')
+        bot.register_next_step_handler(call.message, register_child_password)
 
 
 

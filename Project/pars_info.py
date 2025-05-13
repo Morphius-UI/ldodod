@@ -4,7 +4,7 @@ import time
 db = SqliteDatabase('ldodod/Project/base_ldod.db')
 
 
-class Person(Model): #Хранит все данные которые есть в боте
+class Person(Model): #Хранит все данные которые есть в боте, кто зарегистрирован
     CREATE_DATA = IntegerField()
     user_id = IntegerField()
     Points = IntegerField()
@@ -14,9 +14,7 @@ class Person(Model): #Хранит все данные которые есть �
     class Meta:
         database = db
 
-class PROFILE(Model): #Хранит все-все данные
-    CREATE_DATA = IntegerField()
-    user_id = IntegerField()
+class PROFILE(Model): #Хранит все-все данные о учениках в заведении
     Points = IntegerField()
     Class = IntegerField()
     Register = CharField()
@@ -89,22 +87,28 @@ def truth(login=None, klass=None, point=None):
         for user in PROFILE.select().where(PROFILE.Login == point):
             return user.Points
 
-def register(message, login, klass, password):
+def register(message, login, password, klass=None):
     point = truth(point=login)
     klass = truth(klass=login)
     Person.create(CREATE_DATA=calendar.timegm(time.gmtime()), user_id=message.chat.id, Points=point, Class=klass,
                   Register='True', Login=login)
     USERS_BASE.create(USER_FIO=login, USER_PASSWORD=password)
 
+def deregister(message):
+    for user in Person.select().where(Person.user_id == message.chat.id):
+        k = user.Login
+    obj = USERS_BASE.get(USERS_BASE.USER_FIO == k)
+    obj.delete_instance()
+    obj = Person.get(Person.Login == k)
+    obj.delete_instance()
+
 
 def admin_spisok():
     Usr = []
     Points = []
-    for user in PROFILE.select():
+    for user in Person.select():
         userId = user.user_id
         point = user.Points
         Usr.append(userId)
         Points.append(point)
-
-
     return Usr, Points
