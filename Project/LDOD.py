@@ -92,16 +92,21 @@ def admin_base_login(message):
             bot.send_message(message.chat.id, 'Добро пожаловать, admin!')
             adm_propusk = 1
             print('Вход выполнен, admin, ' + str(message.chat.id))
-            admin_panel(message)
+            admin_panel(message, k=1)
 
-def admin_panel(message):
+def admin_panel(message, k=None):
     if adm_propusk == 1:
         markup = types.InlineKeyboardMarkup()
         magaz = types.InlineKeyboardButton("Список учеников", callback_data="spisok")
         minigame = types.InlineKeyboardButton("Редактировать поинты", callback_data="redact")
         markup.add(magaz, minigame)
-        bot.send_message(message.chat.id, '<b>Панель админа</b>', parse_mode='HTML', reply_markup=markup)
-        
+        if k == 0:
+            bot.edit_message_text('<b>Панель админа</b>', parse_mode='HTML', chat_id=message.chat.id, message_id=message.id, reply_markup=markup)
+        else:
+            bot.send_message(message.chat.id, '<b>Панель админа</b>', parse_mode='HTML', reply_markup=markup)
+        bot.register_next_step_handler(message, admin_call)
+
+
 
 
 
@@ -214,32 +219,6 @@ def register_child(message):
             bot.send_message(message.chat.id, 'Неправильный формат, попробуйте еще раз')
             bot.register_next_step_handler(message, register_child)  # , startapp
 
-@bot.callback_query_handler(func=lambda call: True)
-def admin_call(call):
-    if call.data == 'spisok':
-        print(124124)
-        pagenow = 1
-        markup = types.InlineKeyboardMarkup()
-        nextpage = types.InlineKeyboardButton(text="➡️", callback_data='nextpage')
-        markup.add(nextpage)
-        def page():
-            if pagenow == 1:
-                usr, point = pars_info.admin_spisok()
-                itog = ''
-                if pagenow == 1:
-                    for i in range(10):
-                        itog += f'@{bot.get_chat_member(call.message.chat.id, usr[i]).user.username} - {point[i]}\n'
-                bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
-            else:
-                backpage = types.InlineKeyboardButton(text="⬅️", callback_data='backpage')
-                markup.add(backpage)
-                usr, point = pars_info.admin_spisok()
-                itog = ''
-                for i in range((pagenow * 10 - 10), pagenow * 10):
-                    itog += f'{Usr[i]} -- {Points[i]}'
-                bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
-
-        page()
 
 
 
@@ -263,6 +242,8 @@ def answermenu(call):
     global pagenow
     global chat_id
     global message_id
+    global pagenow1
+    global _all_spis
     message_id = call.message.message_id
     chat_id = call.message.chat.id
     if call.data == 'magaz':
@@ -288,7 +269,7 @@ def answermenu(call):
             nextpage = types.InlineKeyboardButton(text="➡️", callback_data='nextpage')
             if pagenow == 1:
                 markup.add(buy, nextpage, back)
-                photo = open('kryzka.jpg', 'rb')
+                photo = open('ldodod/Project/kryzka.jpg', 'rb')
                 caption = '<b>Фирменная кружка Ldod Score</b>\n\nЦена: <b>30000 поинтов.</b>'
             elif pagenow == 3:
                 backpage = types.InlineKeyboardButton(text="⬅️", callback_data='backpage')
@@ -362,6 +343,45 @@ def answermenu(call):
         profile = f'<b>Ваш профиль</b>\n\nДата регистрации: <b>{timeda}</b>\n\nВаш логин: <b>{_log}</b>\n\nВаш класс: <b>{_klass}</b>\n\nВаши поинты: <b>{_point}</b>'  # + points
         bot.edit_message_text(profile, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="HTML")
 
+    def page():
+        usr, point = pars_info.admin_spisok()
+        itog = ''
+        markup = types.InlineKeyboardMarkup()
+        nextpage = types.InlineKeyboardButton(text="➡️", callback_data='nextpage1')
+        back = types.InlineKeyboardButton(text="Назад", callback_data='back1')
+        if pagenow1 == 1:
+            markup.row(back, nextpage)
+            for i in range(10):
+                itog += f'@{bot.get_chat_member(call.message.chat.id, usr[i]).user.username} - {point[i]}\n'
+            bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
+        else:
+            backpage = types.InlineKeyboardButton(text="⬅️", callback_data='backpage1')
+            markup.row(backpage, nextpage, back)
+            for i in range((pagenow1 * 10 - 10), (pagenow1 * 10)-1):
+                try:
+                    if usr[i] != None:
+                        itog += f'@{bot.get_chat_member(call.message.chat.id, usr[i]).user.username} - {point[i]}\n'
+                except:
+                    _all_spis = True
+                    pass
+            bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
+            
+    if call.data == 'spisok':
+        print(124124)
+        pagenow1 = 1
+        page()
+    if call.data == 'back1':
+        pagenow1 = 1
+        print(pagenow1)
+        admin_panel(call.message, k=0)
+    if call.data == 'nextpage1':
+        pagenow1 += 1
+        print(pagenow1)
+        page()
+    if call.data == 'backpage1':
+        pagenow1 = pagenow - 1
+        print(pagenow1)
+        page()
 
 
 
