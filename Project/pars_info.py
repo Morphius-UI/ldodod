@@ -112,3 +112,17 @@ def admin_spisok():
         Usr.append(userId)
         Points.append(point)
     return Usr, Points
+
+def buy_user(userId, pointss):
+    for user in Person.select().where(Person.user_id == userId):
+        pt = user.Points
+        crt = user.CREATE_DATA
+        cl = user.Class
+        lg = user.Login
+    get = Person.get(Person.user_id == userId)
+    get.delete_instance()
+    Person.create(CREATE_DATA=crt, user_id=userId, Points=pt-pointss, Class=cl,
+                  Register='True', Login=lg)
+    return True
+
+

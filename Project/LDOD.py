@@ -98,8 +98,7 @@ def admin_panel(message, k=None):
     if adm_propusk == 1:
         markup = types.InlineKeyboardMarkup()
         magaz = types.InlineKeyboardButton("Список учеников", callback_data="spisok")
-        minigame = types.InlineKeyboardButton("Редактировать поинты", callback_data="redact")
-        markup.add(magaz, minigame)
+        markup.add(magaz)
         if k == 0:
             bot.edit_message_text('<b>Панель админа</b>', parse_mode='HTML', chat_id=message.chat.id, message_id=message.id, reply_markup=markup)
         else:
@@ -249,7 +248,8 @@ def menu(message=None):
 
 @bot.callback_query_handler(func=lambda call: True)
 def answermenu(call):
-    _id = {1:'0001', 2:'0002', 3:'0003'}
+    _id = {1 : 30000, 2 : 100000, 3 : 10000, 4 : 5000}
+    _type_id = {1 : 'Фирменная кружка Ldod Score', 2: 'Фирменная футболка Ldod Score', 3: 'Значок Ldod Score', 4 : 'Фирменная ручка'}
     global pagesshop, magaz
     global pagenow
     global chat_id
@@ -257,6 +257,7 @@ def answermenu(call):
     global pagenow1
     global _all_spis
     global price
+    global userId
     message_id = call.message.message_id
     price = 0
     chat_id = call.message.chat.id
@@ -287,7 +288,7 @@ def answermenu(call):
                 photo = open('ldodod/Project/kryzka.jpg', 'rb')
                 caption = '<b>Фирменная кружка Ldod Score</b>\n\nЦена: <b>30000 поинтов.</b>'
                 price = 30000
-            elif pagenow == 3:
+            elif pagenow == 4:
                 backpage = types.InlineKeyboardButton(text="⬅️", callback_data='backpage')
                 markup.add(buy, backpage, back)
             else:
@@ -295,6 +296,38 @@ def answermenu(call):
                 markup.add(buy, backpage, nextpage ,back)
             bot.send_photo(chat_id=chat_id, photo=photo, caption=caption, parse_mode='HTML', reply_markup=markup)
         magaz()
+
+    if call.data == 'buy':
+        name = _type_id[pagenow]
+        price = _id[pagenow]
+        _log = pars_info.pars_users(_login=chat_id)
+        _point = pars_info.pars_users(points=_log)
+        if _point >= price:
+            markup = types.InlineKeyboardMarkup()
+            accept = types.InlineKeyboardButton(text="✅", callback_data='buy1')
+            disaccept = types.InlineKeyboardButton(text="❌", callback_data='disbuy')
+            markup.add(accept, disaccept)
+            bot.delete_message(call.message.chat.id, call.message.id)
+            bot.send_message(chat_id=chat_id, text=f'<b>Вы уверены в покупке</b>\n{name}\nЦена: {price}', reply_markup=markup, parse_mode="HTML")
+        else:
+            bot.answer_callback_query(callback_query_id=call.id, text='Не хватает поинтов на балансе ❌')
+
+    if call.data == 'buy1':
+        price = _id[pagenow]
+        pars_info.buy_user(chat_id, price)
+        name = _type_id[pagenow]
+        UsrInfo = bot.get_chat_member(chat_id, chat_id).user.username
+        bot.send_message(1362364051, f'@{UsrInfo} купил {name}\nid={chat_id}')
+        bot.send_message(chat_id, '<b>Успешно✅</b>\n\nВаш запрос отправлен администратору, свяжемся в ближайшее время!', parse_mode='HTML')
+        time.sleep(6)
+        cap = 'Вернуться назад?'
+        markup = types.InlineKeyboardMarkup()
+        accept = types.InlineKeyboardButton(text="Назад", callback_data='back')
+        markup.add(accept)
+        bot.edit_message_text(cap ,chat_id, message_id, reply_markup=markup)
+
+
+
     if call.data == "nextpage":
         pagenow+=1
         if pagenow == 2:
@@ -306,6 +339,18 @@ def answermenu(call):
         elif pagenow == 3:
             photo = open('ldodod/Project/znachok.jpg', 'rb')
             caption = '<b>Значок Ldod Score</b>\n\nЦена: <b>10000 поинтов.</b>'
+            bot.delete_message(call.message.chat.id, call.message.id)
+            price = 10000
+            magaz(photo, caption)
+        elif pagenow == 4:
+            photo = open('ldodod/Project/rushka.png', 'rb')
+            caption = '<b>Фирменная ручка</b>\n\nЦена: <b>5000 поинтов.</b>'
+            bot.delete_message(call.message.chat.id, call.message.id)
+            price = 5000
+            magaz(photo, caption)
+        elif pagenow == 5:
+            photo = open('ldodod/Project/aluonka.png', 'rb')
+            caption = '<b>Шоколадка "Аленка"</b>\n\nЦена: <b>10000 поинтов.</b>'
             bot.delete_message(call.message.chat.id, call.message.id)
             price = 10000
             magaz(photo, caption)
@@ -321,22 +366,42 @@ def answermenu(call):
             price = 100000
             magaz(photo, caption)
         elif pagenow == 3:
-            photo = open('znachok.jpg', 'rb')
+            photo = open('ldodod/Project/znachok.jpg', 'rb')
             caption = '<b>Значок Ldod Score</b>\n\nЦена: <b>10000 поинтов.</b>'
             bot.delete_message(call.message.chat.id, call.message.id)
             price = 10000
             magaz(photo, caption)
-
+        elif pagenow == 4:
+            photo = open('ldodod/Project/rushka.png', 'rb')
+            caption = '<b>Значок Ldod Score</b>\n\nЦена: <b>5000 поинтов.</b>'
+            bot.delete_message(call.message.chat.id, call.message.id)
+            price = 5000
+            magaz(photo, caption)
+        elif pagenow == 5:
+            photo = open('ldodod/Project/aluonka.png', 'rb')
+            caption = '<b>Шоколадка "Аленка"</b>\n\nЦена: <b>10000 поинтов.</b>'
+            bot.delete_message(call.message.chat.id, call.message.id)
+            price = 10000
+            magaz(photo, caption)
 
     if call.data == 'minigame':
         markup = types.InlineKeyboardMarkup()
         back = types.InlineKeyboardButton(text="Назад в меню", callback_data='back')
-        g1 = types.InlineKeyboardButton(text="Крестики нолики", callback_data='g1')
+        g1 = types.InlineKeyboardButton(text="Крестики нолики", callback_data='g12')
         g2 = types.InlineKeyboardButton(text="4 в ряд", callback_data='g2')
         g3 = types.InlineKeyboardButton(text="Морской бой", callback_data='g3')
         markup.add(g1, g2, g3, back)
         textminigame = 'Добро пожаловать в магазин💼\nЗдесь вы можете преобрести товары за ваши поинты.\nВаши поинты:'  # + points
         bot.edit_message_text(textminigame, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
+
+    if call.data == 'g12':
+        bot.answer_callback_query(callback_query_id=call.id, text='Ошибка. Попробуйте позже.')
+    if call.data == 'g2':
+        bot.answer_callback_query(callback_query_id=call.id, text='Ошибка. Попробуйте позже.')
+    if call.data == 'g3':
+        bot.answer_callback_query(callback_query_id=call.id, text='Ошибка. Попробуйте позже.')
+
+
     if call.data == 'g1':
         markup = types.InlineKeyboardMarkup()
         back = types.InlineKeyboardButton(text="Назад в меню", callback_data='back')
@@ -368,8 +433,8 @@ def answermenu(call):
         itog = f'<b>Страница {pagenow1}</b>\n'
         markup = types.InlineKeyboardMarkup()
         back = types.InlineKeyboardButton(text="Назад", callback_data='back1')
+        nextpage = types.InlineKeyboardButton(text="➡️", callback_data='nextpage1')
         if len(usr) > pagenow1*10:
-            nextpage = types.InlineKeyboardButton(text="➡️", callback_data='nextpage1')
             if pagenow1 == 1:
                 markup.row(back, nextpage)
                 for i in range(10):
@@ -388,10 +453,13 @@ def answermenu(call):
                 bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="HTML")
         else:
             if pagenow1 <= 1:
-                markup.row(back, nextpage)
-                for i in range(10):
-                    itog += f'@{bot.get_chat_member(call.message.chat.id, usr[i]).user.username} - {point[i]}\n'
-                bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="HTML")
+                markup.row(back)
+                try:
+                    for i in range(10):
+                        itog += f'@{bot.get_chat_member(call.message.chat.id, usr[i]).user.username} - {point[i]}\n'
+                        bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="HTML")
+                except:
+                    bot.edit_message_text(itog, reply_markup=markup, chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="HTML")
             else:
                 backpage = types.InlineKeyboardButton(text="⬅️", callback_data='backpage1')
                 markup.row(backpage, back)
